@@ -3,7 +3,10 @@ name: 📦 Build & Publish XCFramework + Update Package.swift
 on:
   push:
     branch:
-      - "*/*"  # запускается только при пуше тега вида v1.2.3
+      - '*/*'  # run on version tags like v1.2.3
+
+permissions:
+  contents: write
 
 jobs:
   build_publish:
@@ -11,31 +14,51 @@ jobs:
 
     steps:
       - name: 🔄 Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: 🛠 Resolve SwiftPM Dependencies
-        run: swift package resolve
+      - name: ☕️ Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
-      - name: 🧰 Build XCFramework
-        uses: unsignedapps/swift-create-xcframework@v2
+      - name: 🔧 Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: 🧰 Build KMP XCFramework
+        run: ./gradlew :composeApp:assembleComposeAppXCFramework --stacktrace
 
       - name: 📦 Package ZIP
         run: |
-          FRAMEWORK=$(ls *.xcframework)
-          mv "$FRAMEWORK" SPMTest.xcframework
-          zip -r SPMTest.xcframework.zip SPMTest.xcframework
+          FRAMEWORK_PATH="composeApp/build/XCFrameworks/release/ComposeApp.xcframework"
+          test -d "$FRAMEWORK_PATH" || { echo "XCFramework not found at $FRAMEWORK_PATH"; exit 1; }
+          cp -R "$FRAMEWORK_PATH" ComposeApp.xcframework
+          zip -r ComposeApp.xcframework.zip ComposeApp.xcframework
 
       - name: 📊 Compute checksum
         id: checksum
         run: |
-          echo "checksum=$(swift package compute-checksum SPMTest.xcframework.zip)" >> $GITHUB_OUTPUT
+          echo "checksum=$(swift package compute-checksum ComposeApp.xcframework.zip)" >> "$GITHUB_OUTPUT"
 
       - name: 🛠 Set variables
         run: |
-          echo "ZIPFILE=SPMTest.xcframework.zip" >> $GITHUB_ENV
-          echo "CHECKSUM=${{ steps.checksum.outputs.checksum }}" >> $GITHUB_ENV
-          TAG=${GITHUB_REF#refs/tags/}
-          echo "TAG=${TAG}" >> $GITHUB_ENV
+          echo "ZIPFILE=ComposeApp.xcframework.zip" >> "$GITHUB_ENV"
+          echo "CHECKSUM=${{ steps.checksum.outputs.checksum }}" >> "$GITHUB_ENV"
+          echo "TAG=${GITHUB_REF_NAME}" >> "$GITHUB_ENV"
+
+      - name: 🧩 Update Package.swift for tag
+        run: |
+          URL="https://github.com/${{ github.repository }}/releases/download/${TAG}/${ZIPFILE}"
+          sed -i '' "s|URL_PLACEHOLDER|${URL}|g" Package.swift
+          sed -i '' "s|CHECKSUM_PLACEHOLDER|${CHECKSUM}|g" Package.swift
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Package.swift
+          git commit -m "chore: update Package.swift for ${TAG}" || echo "No changes to commit"
+          git tag -f "${TAG}"
+          git push --force origin "refs/tags/${TAG}"
 
       - name: 📌 Create GitHub Release & Upload ZIP
         uses: softprops/action-gh-release@v2
@@ -44,15 +67,3 @@ jobs:
           files: ${{ env.ZIPFILE }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: 🧩 Update Package.swift
-        run: |
-          URL="https://github.com/${{ github.repository }}/releases/download/${TAG}/${ZIPFILE}"
-          sed -i '' "s|URL_PLACEHOLDER|${URL}|g" Package.swift
-          sed -i '' "s|CHECKSUM_PLACEHOLDER|${CHECKSUM}|g" Package.swift
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add Package.swift
-          git commit -m "chore: update Package.swift for ${TAG}"
-          git tag -f "${TAG}"
-          git push --force origin "refs/tags/${TAG}"

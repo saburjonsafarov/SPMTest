@@ -1,4 +1,4 @@
-// swift-tools-version:5.3
+// swift-tools-version:5.9
 
 import PackageDescription
 
@@ -13,7 +13,8 @@ let package = Package(
     targets: [
         .binaryTarget(
             name: "ComposeApp",
-            url: "https://github.com/saburjonsafarov/SPMTest/releases/download/release/ComposeApp.xcframework.zip",
-            checksum: "5a9c58abf74967d3453cdd7915ebfa57972888ebfd2d1dedf484e6c22f08862f")
+            url: "URL_PLACEHOLDER",
+            checksum: "CHECKSUM_PLACEHOLDER"
+        )
     ]
 )
