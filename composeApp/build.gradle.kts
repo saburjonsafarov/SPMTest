@@ -1,5 +1,4 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -15,17 +14,12 @@ kotlin {
         }
     }
 
-    val xcframeworkName = "ComposeApp"
-    val xcf = XCFramework(xcFrameworkName = xcframeworkName)
-
     listOf(
         iosArm64(),
         iosSimulatorArm64()
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
-            baseName = xcframeworkName
-            binaryOption(name = "bundleId", value = "com.ssh.$xcframeworkName")
-            xcf.add(framework = this)
+            baseName = "ComposeApp"
             isStatic = true
         }
     }
