@@ -23,18 +23,19 @@ jobs:
         run: |
           FRAMEWORK=$(ls *.xcframework)
           mv "$FRAMEWORK" SPMTest.xcframework
-          zip -r "SPMTest.xcframework.zip" "SPMTest.xcframework"
+          zip -r SPMTest.xcframework.zip SPMTest.xcframework
 
       - name: 📊 Compute checksum
         id: checksum
         run: |
-          echo "::set-output name=checksum::$(swift package compute-checksum SPMTest.xcframework.zip)"
+          echo "checksum=$(swift package compute-checksum SPMTest.xcframework.zip)" >> $GITHUB_OUTPUT
 
       - name: 🛠 Set variables
         run: |
           echo "ZIPFILE=SPMTest.xcframework.zip" >> $GITHUB_ENV
           echo "CHECKSUM=${{ steps.checksum.outputs.checksum }}" >> $GITHUB_ENV
-          echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+          TAG=${GITHUB_REF#refs/tags/}
+          echo "TAG=${TAG}" >> $GITHUB_ENV
 
       - name: 📌 Create GitHub Release & Upload ZIP
         uses: softprops/action-gh-release@v2
@@ -52,6 +53,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add Package.swift
-          git commit -m "chore: update Package.swift with new binary info for ${TAG}"
+          git commit -m "chore: update Package.swift for ${TAG}"
           git tag -f "${TAG}"
           git push --force origin "refs/tags/${TAG}"
