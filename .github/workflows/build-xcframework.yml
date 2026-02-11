@@ -2,8 +2,8 @@ name: 📦 Build & Publish XCFramework + Update Package.swift
 
 on:
   push:
-    tags:
-      - "v*.*.*"
+    branch:
+      - "*/*"
 
 jobs:
   build_publish:
