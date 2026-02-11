@@ -3,7 +3,7 @@ name: 📦 Build & Publish XCFramework + Update Package.swift
 on:
   push:
     branch:
-      - "*/*"
+      - "*/*"  # запускается только при пуше тега вида v1.2.3
 
 jobs:
   build_publish:
