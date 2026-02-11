@@ -18,10 +18,6 @@ jobs:
 
       - name: 🧰 Build XCFramework
         uses: unsignedapps/swift-create-xcframework@v2
-        with:
-        # можно указать схемы, если нужно
-        # schemes: "SPMTest"
-        # targets: "SPMTest"
 
       - name: 📦 Package ZIP
         run: |
