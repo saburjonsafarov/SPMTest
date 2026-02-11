@@ -24,7 +24,7 @@ kotlin {
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
             baseName = xcframeworkName
-            binaryOption("bundleId", "org.example.${xcframeworkName}")
+            binaryOption(name = "bundleId", value = "com.ssh.$xcframeworkName")
             xcf.add(framework = this)
             isStatic = true
         }
